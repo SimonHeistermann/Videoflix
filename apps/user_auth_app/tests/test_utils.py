@@ -1,3 +1,13 @@
+"""
+Tests for authentication utility functions.
+
+Covers:
+- UID/token generation,
+- user lookup helpers,
+- frontend link generation,
+- cookie set/delete helpers.
+"""
+
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -10,7 +20,14 @@ User = get_user_model()
 
 
 class TestUtils(TestCase):
+    """
+    Unit tests for apps.user_auth_app.utils.
+    """
+
     def test_build_uid_and_token(self):
+        """
+        build_uid_and_token should return non-empty uidb64 and token values.
+        """
         user = User.objects.create_user(
             username="u",
             email="u@example.com",
@@ -22,9 +39,16 @@ class TestUtils(TestCase):
         self.assertTrue(token)
 
     def test_get_user_from_uid_invalid(self):
+        """
+        get_user_from_uid should return None for invalid base64 inputs.
+        """
         self.assertIsNone(utils.get_user_from_uid("not-base64"))
 
     def test_try_get_user_by_email(self):
+        """
+        try_get_user_by_email should return None for empty emails and return
+        a user for known emails.
+        """
         self.assertIsNone(utils.try_get_user_by_email(""))
 
         user = User.objects.create_user(
@@ -43,6 +67,10 @@ class TestUtils(TestCase):
         FRONTEND_RESET_PATH="reset.html",
     )
     def test_build_frontend_link(self):
+        """
+        build_frontend_link should build a URL containing the base URL, path,
+        and uid/token query parameters.
+        """
         user = User.objects.create_user(
             username="u3",
             email="u3@example.com",
@@ -51,6 +79,7 @@ class TestUtils(TestCase):
         )
         uidb64, token = utils.build_uid_and_token(user)
         link = utils.build_frontend_link("activate", uidb64, token)
+
         self.assertIn("https://frontend.example/activate.html", link)
         self.assertIn("uid=", link)
         self.assertIn("token=", link)
@@ -67,16 +96,21 @@ class TestUtils(TestCase):
         },
     )
     def test_cookie_set_and_delete(self):
+        """
+        Cookie helpers should set and delete access/refresh cookies as expected.
+        """
         response = HttpResponse()
         utils.set_access_cookie(response, "ACCESS")
         utils.set_refresh_cookie(response, "REFRESH")
+
         self.assertIn("access_token", response.cookies)
         self.assertIn("refresh_token", response.cookies)
-
         self.assertEqual(response.cookies["access_token"].value, "ACCESS")
         self.assertEqual(response.cookies["refresh_token"].value, "REFRESH")
+
         response2 = HttpResponse()
         utils.delete_auth_cookies(response2)
+
         self.assertIn("access_token", response2.cookies)
         self.assertIn("refresh_token", response2.cookies)
         self.assertEqual(response2.cookies["access_token"]["max-age"], 0)
