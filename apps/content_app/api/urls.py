@@ -1,3 +1,7 @@
+"""
+URL configuration for the content application's API endpoints.
+"""
+
 from django.urls import path
 
 from .views import HLSPlaylistView, HLSSegmentView, VideoListView
