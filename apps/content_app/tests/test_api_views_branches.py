@@ -1,3 +1,10 @@
+"""
+Branch coverage tests for content API HLS endpoints.
+
+These tests focus on ensuring that invalid inputs (resolution or segment names)
+are rejected with 404 responses, exercising the view-level validation branches.
+"""
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -10,7 +17,14 @@ User = get_user_model()
 
 @override_settings(MEDIA_ROOT="/tmp/videoflix_test_media_api_views_branches")
 class TestApiViewsBranches(TestCase):
+    """
+    Tests covering edge branches for HLS playlist and segment endpoints.
+    """
+
     def setUp(self):
+        """
+        Create an authenticated API client and an active user.
+        """
         self.client = APIClient()
         self.user = User.objects.create_user(
             username="u",
@@ -21,6 +35,12 @@ class TestApiViewsBranches(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def _create_video(self):
+        """
+        Helper to create a minimal Video instance with an uploaded dummy file.
+
+        Returns:
+            Video: Newly created video instance.
+        """
         return Video.objects.create(
             title="Movie",
             description="desc",
@@ -29,19 +49,29 @@ class TestApiViewsBranches(TestCase):
         )
 
     def test_playlist_invalid_resolution_returns_404(self):
+        """
+        Playlist endpoint should return 404 when resolution is invalid.
+        """
         v = self._create_video()
         res = self.client.get(f"/api/video/{v.id}/999p/index.m3u8")
         self.assertEqual(res.status_code, 404)
 
     def test_segment_invalid_resolution_returns_404(self):
+        """
+        Segment endpoint should return 404 when resolution is invalid.
+        """
         v = self._create_video()
         res = self.client.get(f"/api/video/{v.id}/999p/segment_000.ts/")
         self.assertEqual(res.status_code, 404)
 
     def test_segment_invalid_name_returns_404(self):
         """
-        Must be a single <str:segment> without slashes, otherwise the URL won't resolve
-        and the view code (lines 81-82) never runs.
+        Segment endpoint should return 404 when the segment name is invalid.
+
+        Note:
+            The segment is captured as a single <str:segment> without slashes.
+            If the URL contains slashes, routing won't match and the view code
+            will not be executed.
         """
         v = self._create_video()
 
