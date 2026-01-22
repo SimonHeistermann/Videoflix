@@ -1,3 +1,12 @@
+"""
+Additional tests for content app signal handlers.
+
+These tests cover extra branches and edge cases such as:
+- safe_remove swallowing exceptions,
+- early returns in post_save receiver,
+- thumbnail cleanup enqueueing on post_delete.
+"""
+
 import os
 from unittest.mock import patch
 
@@ -10,23 +19,39 @@ from apps.content_app import signals
 
 @override_settings(MEDIA_ROOT="/tmp/videoflix_test_media_signals_extra")
 class TestSignalsExtras(TestCase):
+    """
+    Extra branch tests for signal handlers in apps.content_app.signals.
+    """
+
     def test_safe_remove_swallows_exceptions(self):
+        """
+        safe_remove should suppress exceptions raised during filesystem deletion.
+        """
         with patch("apps.content_app.signals.Path.unlink", side_effect=OSError("boom")):
             signals.safe_remove("/tmp/does-not-matter.txt")
 
     def test_post_save_returns_early_when_not_created(self):
+        """
+        post_save receiver should return early when created=False.
+        """
         inst = type("X", (), {"video_file": None})()
         with patch("apps.content_app.signals.enqueue_after_commit") as enqueue:
             signals.video_created_convert_to_hls(sender=None, instance=inst, created=False)
             enqueue.assert_not_called()
 
     def test_post_save_returns_early_when_no_video_file(self):
+        """
+        post_save receiver should return early when instance has no video file.
+        """
         inst = type("X", (), {"video_file": None})()
         with patch("apps.content_app.signals.enqueue_after_commit") as enqueue:
             signals.video_created_convert_to_hls(sender=None, instance=inst, created=True)
             enqueue.assert_not_called()
 
     def test_post_delete_enqueues_thumbnail_cleanup_when_thumbnail_exists(self):
+        """
+        post_delete receiver should enqueue thumbnail file removal if it exists on disk.
+        """
         video = Video.objects.create(
             title="WithThumb",
             description="desc",

@@ -1,3 +1,15 @@
+"""
+Tests for content app background tasks.
+
+Covers:
+- convert_video_to_hls behavior on missing input,
+- FFmpeg invocation for each allowed resolution,
+- directory creation side effects,
+- deleting output directories,
+- ffmpeg command generation,
+- parent directory creation helper.
+"""
+
 import os
 import tempfile
 from pathlib import Path
@@ -9,7 +21,14 @@ from apps.content_app import tasks
 
 
 class TestContentTasks(TestCase):
+    """
+    Unit tests for apps.content_app.tasks.
+    """
+
     def test_convert_video_to_hls_returns_if_missing_path(self):
+        """
+        convert_video_to_hls should no-op if path is empty or does not exist.
+        """
         with patch("apps.content_app.tasks.subprocess.run") as run:
             tasks.convert_video_to_hls("")
             tasks.convert_video_to_hls("/does/not/exist.mp4")
@@ -17,6 +36,10 @@ class TestContentTasks(TestCase):
 
     @override_settings(FFMPEG_BIN="ffmpeg")
     def test_convert_video_to_hls_calls_ffmpeg_for_each_resolution(self):
+        """
+        convert_video_to_hls should invoke FFmpeg once per allowed resolution and
+        create the expected output directories.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             src = os.path.join(tmp, "video.mp4")
             Path(src).write_bytes(b"dummy")
@@ -42,6 +65,9 @@ class TestContentTasks(TestCase):
                 self.assertTrue(out_dir.is_dir())
 
     def test_delete_hls_outputs_removes_existing_dirs(self):
+        """
+        delete_hls_outputs should remove resolution directories when they exist.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             src = os.path.join(tmp, "video.mp4")
             Path(src).write_bytes(b"dummy")
@@ -62,9 +88,15 @@ class TestContentTasks(TestCase):
                 self.assertFalse(out_dir.exists())
 
     def test_delete_hls_outputs_noop_on_empty(self):
+        """
+        delete_hls_outputs should be a no-op for empty input.
+        """
         tasks.delete_hls_outputs("")
 
     def test_ffmpeg_cmd_contains_expected_flags(self):
+        """
+        _ffmpeg_cmd should produce a command containing the expected HLS flags.
+        """
         cmd = tasks._ffmpeg_cmd(
             ffmpeg="ffmpeg",
             source="/x/video.mp4",
@@ -84,6 +116,9 @@ class TestContentTasks(TestCase):
         self.assertIn("/out/index.m3u8", cmd)
 
     def test_ensure_parent_dirs_creates_parent(self):
+        """
+        _ensure_parent_dirs should create parent directories for a deep path.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             deep = Path(tmp) / "a" / "b" / "video.mp4"
             self.assertFalse(deep.parent.exists())
