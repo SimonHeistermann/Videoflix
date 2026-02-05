@@ -17,15 +17,16 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 
-def send_activation_email(email, activation_link):
+def send_activation_email(email, activation_link, user_name=None):
     """
     Send an account activation email to the given address.
 
     Args:
         email (str): Recipient email address.
         activation_link (str): Frontend link used to activate the account.
+        user_name (str | None): Optional user name to personalize the email.
     """
-    context = {"activation_link": activation_link}
+    context = {"activation_link": activation_link, "user_name": user_name}
     _send_templated_email(
         to_email=email,
         subject="Confirm your email",

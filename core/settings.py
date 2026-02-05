@@ -110,7 +110,8 @@ DATABASES = {
         "USER": os.environ.get("DB_USER", default="videoflix_user"),
         "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
         "HOST": os.environ.get("DB_HOST", default="db"),
-        "PORT": int(os.environ.get("DB_PORT", default=5432))
+        "PORT": int(os.environ.get("DB_PORT", default=5432)),
+        "ATOMIC_REQUESTS": True,
     }
 }
 

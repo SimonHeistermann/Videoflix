@@ -223,9 +223,9 @@ This will:
 
 | Service | URL |
 |---------|-----|
-| API | http://localhost:8001/api/ |
-| Admin Panel | http://localhost:8001/admin/ |
-| RQ Dashboard | http://localhost:8001/django-rq/ |
+| API | http://localhost:8000/api/ |
+| Admin Panel | http://localhost:8000/admin/ |
+| RQ Dashboard | http://localhost:8000/django-rq/ |
 
 ---
 
@@ -398,7 +398,7 @@ Blacklists refresh token, deletes cookies.
 
 ### Upload Video (Admin Panel)
 
-1. Go to http://localhost:8001/admin/
+1. Go to http://localhost:8000/admin/
 2. Login with superuser credentials
 3. Navigate to **Videos** > **Add Video**
 4. Fill in title, description, category
@@ -578,7 +578,7 @@ docker exec -it videoflix_backend python manage.py <command>
    docker compose logs -f web | grep rqworker
    ```
 
-2. Check RQ dashboard: http://localhost:8001/django-rq/
+2. Check RQ dashboard: http://localhost:8000/django-rq/
 
 3. Verify FFmpeg is available:
    ```bash

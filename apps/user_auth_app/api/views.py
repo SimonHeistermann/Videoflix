@@ -60,7 +60,7 @@ class RegisterView(APIView):
 
         uidb64, token = build_uid_and_token(user)
         activation_link = build_frontend_link("activate", uidb64, token)
-        enqueue_after_commit(send_activation_email, user.email, activation_link)
+        enqueue_after_commit(send_activation_email, user.email, activation_link, user.email)
 
         return Response(
             register_response(user, token),
@@ -126,7 +126,7 @@ class LoginView(TokenObtainPairView):
         except ValidationError:
             return Response(
                 {"message": "Email or Password wrong"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         user = serializer.validated_data["user"]
