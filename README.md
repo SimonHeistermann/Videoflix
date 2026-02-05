@@ -167,6 +167,8 @@ EMAIL_USE_SSL=False
 DEFAULT_FROM_EMAIL=noreply@videoflix.com
 
 # Frontend URLs (for email links)
+# IMPORTANT: Adjust FRONTEND_BASE_URL to match your frontend's URL and port!
+# Email links (activation, password reset) will use this URL.
 FRONTEND_BASE_URL=http://localhost:4200
 FRONTEND_ACTIVATE_PATH=pages/auth/activate.html
 FRONTEND_RESET_PATH=pages/auth/confirm_password.html
@@ -204,6 +206,14 @@ For email functionality (registration confirmation, password reset), configure S
 
 **For Production:**
 Use your actual SMTP provider (e.g., SendGrid, Mailgun, Gmail SMTP).
+
+> **⚠️ Important: Frontend URL Configuration**
+>
+> The `FRONTEND_BASE_URL` in your `.env` file determines where email links (account activation, password reset) will point to.
+>
+> - If your frontend runs on a different port (e.g., `http://localhost:5000`), you **must** update `FRONTEND_BASE_URL` accordingly
+> - For production, set this to your actual frontend domain (e.g., `https://yourdomain.com`)
+> - The paths `FRONTEND_ACTIVATE_PATH` and `FRONTEND_RESET_PATH` can also be customized if your frontend uses different routes
 
 ### 6. Start Docker Containers
 
