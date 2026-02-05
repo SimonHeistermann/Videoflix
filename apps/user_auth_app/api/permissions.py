@@ -9,6 +9,8 @@ from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
+from ..utils import cookie_name
+
 
 class IsActiveUser(BasePermission):
     """
@@ -57,7 +59,7 @@ class AuthenticatedViaRefreshToken(BasePermission):
         Returns:
             bool: True if a valid refresh token cookie exists, otherwise False.
         """
-        token = request.COOKIES.get("refresh_token")
+        token = request.COOKIES.get(cookie_name("refresh"))
         if not token:
             return False
 
