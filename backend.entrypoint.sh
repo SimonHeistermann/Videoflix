@@ -34,6 +34,9 @@ else:
     print(f"Superuser '{username}' already exists.")
 EOF
 
+# Seed demo videos from Pexels (skips if videos already exist)
+python manage.py seed_demos
+
 # Start RQ worker in background (handles video conversion + email sending)
 python manage.py rqworker default &
 
