@@ -15,7 +15,7 @@ commercial use, no attribution required).
 
 import os
 import tempfile
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from django.core.files import File
 from django.core.management.base import BaseCommand
@@ -58,7 +58,8 @@ def _download(url):
     suffix = os.path.splitext(url.split("?")[0])[1] or ".tmp"
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
     try:
-        with urlopen(url, timeout=120) as resp:
+        req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(req, timeout=120) as resp:
             while True:
                 chunk = resp.read(1024 * 256)
                 if not chunk:
