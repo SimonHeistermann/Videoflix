@@ -1,0 +1,43 @@
+## Render Blueprint — Videoflix Backend
+## Deploy via: https://render.com/deploy → New Blueprint Instance → Connect GitHub repo
+## Set rootDirectory to "backend" in Render dashboard.
+##
+## Required external services (create manually, then add URLs as env vars):
+##   - Neon PostgreSQL → DATABASE_URL
+##   - Upstash Redis   → REDIS_URL
+##
+## Note: The RQ worker runs inside the web container (background process).
+## This is sufficient for a demo project with a few videos.
+
+services:
+  - type: web
+    name: videoflix-api
+    runtime: docker
+    dockerfilePath: backend.Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://videoflix.projects.simon-heistermann.de"
+      - key: SECURE_COOKIES
+        value: "True"
+      - key: JWT_COOKIE_SAMESITE
+        value: "None"
+      - key: USE_X_FORWARDED_PROTO
+        value: "True"
+      - key: FRONTEND_BASE_URL
+        value: "https://videoflix.projects.simon-heistermann.de"
+      - key: FRONTEND_ACTIVATE_PATH
+        value: "pages/auth/activate.html"
+      - key: FRONTEND_RESET_PATH
+        value: "pages/auth/confirm_password.html"

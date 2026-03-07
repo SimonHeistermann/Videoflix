@@ -1,5 +1,17 @@
 # Videoflix - Backend API
 
+> Django REST backend for a Netflix-style video streaming platform — a training project from Developer Akademie.
+
+## Disclaimer
+
+This is a **training and portfolio project** built as part of my education at [Developer Akademie](https://developerakademie.com/). It is **not** a commercial product and is not intended for real-world use. This is not a real streaming service — no real transactions, orders, or services are processed. Video content is for demonstration purposes only.
+
+Developed as part of the Developer Akademie GmbH advanced training program.
+
+---
+
+## About
+
 **Videoflix** is a Django REST API for a video streaming platform.
 It provides user authentication, video management, and **HLS adaptive streaming** with multiple resolutions (480p, 720p, 1080p).
 
@@ -618,6 +630,26 @@ docker exec -it videoflix_backend python manage.py <command>
 
 ---
 
+## Legal
+
+- [Privacy Policy](https://videoflix.projects.simon-heistermann.de/pages/privacy/index.html)
+- [Impressum / Legal Notice](https://videoflix.projects.simon-heistermann.de/pages/imprint/index.html)
+
+---
+
+## Author
+
+**Simon Maximilian Heistermann**
+- Website: [simon-heistermann.de](https://simon-heistermann.de)
+- Email: simon@heistermann-solutions.de
+- LinkedIn: [Simon Heistermann](https://www.linkedin.com/in/simon-heistermann/)
+
+---
+
 ## License
 
-MIT License
+This project is licensed under the **Developer Akademie Learning License (Non-commercial)**.
+Use exclusively for learning and educational purposes within the advanced training programs
+and in accordance with the portfolio regulation. See [LICENSE](../frontend/LICENSE.md) for details.
+
+Developed as part of the Developer Akademie GmbH advanced training program.

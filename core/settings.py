@@ -103,38 +103,71 @@ INTERNAL_IPS = [
 # -----------------------------------------------------------------------------
 # Database / Cache / RQ
 # -----------------------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", default="videoflix_db"),
-        "USER": os.environ.get("DB_USER", default="videoflix_user"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
-        "HOST": os.environ.get("DB_HOST", default="db"),
-        "PORT": int(os.environ.get("DB_PORT", default=5432)),
-        "ATOMIC_REQUESTS": True,
-    }
-}
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_LOCATION", default="redis://redis:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+# Database: DATABASE_URL (Neon/Render) or individual vars (Docker)
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    import dj_database_url
+    DATABASES = {
+        "default": dj_database_url.parse(_database_url, conn_max_age=600)
+    }
+    DATABASES["default"]["ATOMIC_REQUESTS"] = True
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", default="videoflix_db"),
+            "USER": os.environ.get("DB_USER", default="videoflix_user"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
+            "HOST": os.environ.get("DB_HOST", default="db"),
+            "PORT": int(os.environ.get("DB_PORT", default=5432)),
+            "ATOMIC_REQUESTS": True,
+        }
+    }
+
+# Redis: REDIS_URL (Upstash/Render) or individual vars (Docker)
+_redis_url = os.environ.get("REDIS_URL")
+_redis_ssl_kwargs = {"ssl_cert_reqs": None} if _redis_url and _redis_url.startswith("rediss://") else {}
+
+if _redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _redis_url,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": _redis_ssl_kwargs,
+            },
+            "KEY_PREFIX": "videoflix"
+        }
+    }
+    RQ_QUEUES = {
+        'default': {
+            'URL': _redis_url,
+            'DEFAULT_TIMEOUT': 900,
+            'REDIS_CLIENT_KWARGS': _redis_ssl_kwargs,
         },
-        "KEY_PREFIX": "videoflix"
     }
-}
-
-RQ_QUEUES = {
-    'default': {
-        'HOST': os.environ.get("REDIS_HOST", default="redis"),
-        'PORT': os.environ.get("REDIS_PORT", default=6379),
-        'DB': os.environ.get("REDIS_DB", default=0),
-        'DEFAULT_TIMEOUT': 900,
-        'REDIS_CLIENT_KWARGS': {},
-    },
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": os.environ.get("REDIS_LOCATION", default="redis://redis:6379/1"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient"
+            },
+            "KEY_PREFIX": "videoflix"
+        }
+    }
+    RQ_QUEUES = {
+        'default': {
+            'HOST': os.environ.get("REDIS_HOST", default="redis"),
+            'PORT': os.environ.get("REDIS_PORT", default=6379),
+            'DB': os.environ.get("REDIS_DB", default=0),
+            'DEFAULT_TIMEOUT': 900,
+            'REDIS_CLIENT_KWARGS': {},
+        },
+    }
 
 
 # -----------------------------------------------------------------------------
