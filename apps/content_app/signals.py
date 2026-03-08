@@ -14,7 +14,7 @@ from django.dispatch import receiver
 
 from .models import Video
 from .tasks import convert_video_to_hls, delete_hls_outputs
-from .utils import enqueue_after_commit
+from .utils import ALLOWED_RESOLUTIONS, enqueue_after_commit, hls_playlist_path
 
 
 def safe_remove(path: str) -> None:
@@ -34,11 +34,12 @@ def safe_remove(path: str) -> None:
 @receiver(post_save, sender=Video)
 def video_created_convert_to_hls(sender, instance: Video, created: bool, **kwargs):
     """
-    Enqueue HLS conversion for newly created videos.
+    Enqueue HLS conversion when a video needs it.
 
-    Only enqueues conversion if:
-    - the model instance was newly created,
-    - a video file is present.
+    Triggers conversion if:
+    - the video is newly created and has a video file, OR
+    - the video already exists but HLS playlists are missing (e.g. after
+      ephemeral filesystem wipe on Render).
 
     Args:
         sender: The model class that sent the signal.
@@ -46,9 +47,20 @@ def video_created_convert_to_hls(sender, instance: Video, created: bool, **kwarg
         created (bool): True if this is a newly created record.
         **kwargs: Additional signal keyword arguments.
     """
-    if not created or not instance.video_file:
+    if not instance.video_file:
         return
-    enqueue_after_commit(convert_video_to_hls, instance.video_file.path)
+
+    if created:
+        enqueue_after_commit(convert_video_to_hls, instance.video_file.path)
+        return
+
+    # Re-save of existing video: only enqueue if HLS files are missing
+    missing = any(
+        not hls_playlist_path(instance.video_file.path, res).exists()
+        for res in ALLOWED_RESOLUTIONS
+    )
+    if missing:
+        enqueue_after_commit(convert_video_to_hls, instance.video_file.path)
 
 
 @receiver(post_delete, sender=Video)
