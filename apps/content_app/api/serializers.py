@@ -9,6 +9,7 @@ is available.
 from rest_framework import serializers
 
 from ..models import Video
+from ..utils import ALLOWED_RESOLUTIONS
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -21,10 +22,11 @@ class VideoSerializer(serializers.ModelSerializer):
     """
 
     thumbnail_url = serializers.SerializerMethodField()
+    available_resolutions = serializers.SerializerMethodField()
 
     class Meta:
         model = Video
-        fields = ("id", "created_at", "title", "description", "thumbnail_url", "category")
+        fields = ("id", "created_at", "title", "description", "thumbnail_url", "category", "available_resolutions")
 
     def get_thumbnail_url(self, obj: Video):
         """
@@ -46,3 +48,7 @@ class VideoSerializer(serializers.ModelSerializer):
 
         url = obj.thumbnail_url.url
         return request.build_absolute_uri(url) if request else url
+
+    def get_available_resolutions(self, obj):
+        """Return the list of resolutions the backend is configured to produce."""
+        return sorted(ALLOWED_RESOLUTIONS.keys())
