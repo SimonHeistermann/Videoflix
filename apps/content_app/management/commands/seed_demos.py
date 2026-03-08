@@ -5,9 +5,13 @@ Downloads 3 short, free stock videos and their thumbnails from Pexels CDN,
 creates Video model entries, and lets the existing post_save signal trigger
 HLS conversion via the RQ worker.
 
+On ephemeral filesystems (e.g. Render free tier), DB entries persist but
+files are lost on redeploy. This command detects missing files and
+re-downloads them automatically.
+
 Usage:
-    python manage.py seed_demos          # seed if DB is empty
-    python manage.py seed_demos --force  # re-seed even if videos exist
+    python manage.py seed_demos          # seed or restore missing files
+    python manage.py seed_demos --force  # delete all and re-seed from scratch
 
 All videos are licensed under the Pexels License (free for personal and
 commercial use, no attribution required).
@@ -73,25 +77,44 @@ def _download(url):
         raise
 
 
+def _files_exist(video):
+    """Check if both video file and thumbnail exist on disk."""
+    try:
+        vid_ok = video.video_file and os.path.isfile(video.video_file.path)
+        thumb_ok = video.thumbnail_url and os.path.isfile(video.thumbnail_url.path)
+        return vid_ok and thumb_ok
+    except Exception:
+        return False
+
+
 class Command(BaseCommand):
-    help = "Seed 3 demo videos from Pexels (skips if videos already exist)."
+    help = "Seed 3 demo videos from Pexels (restores files after ephemeral redeploy)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--force",
             action="store_true",
-            help="Re-seed even if videos already exist in the database.",
+            help="Delete existing demo videos and re-seed from scratch.",
         )
 
     def handle(self, *args, **options):
-        if Video.objects.exists() and not options["force"]:
-            self.stdout.write(self.style.SUCCESS("Demo videos already exist — skipping seed."))
-            return
+        if options["force"]:
+            deleted, _ = Video.objects.filter(
+                title__in=[v["title"] for v in DEMO_VIDEOS]
+            ).delete()
+            self.stdout.write(f"  Force mode: deleted {deleted} existing entries.")
 
         for entry in DEMO_VIDEOS:
-            if Video.objects.filter(title=entry["title"]).exists():
-                self.stdout.write(f"  '{entry['title']}' already exists — skipping.")
+            existing = Video.objects.filter(title=entry["title"]).first()
+
+            if existing and _files_exist(existing):
+                self.stdout.write(f"  '{entry['title']}' OK — skipping.")
                 continue
+
+            # DB entry exists but files are missing (ephemeral filesystem wiped)
+            if existing:
+                self.stdout.write(f"  '{entry['title']}' files missing — re-downloading...")
+                existing.delete()
 
             self.stdout.write(f"  Downloading video: {entry['title']}...")
             video_tmp = _download(entry["video_url"])
