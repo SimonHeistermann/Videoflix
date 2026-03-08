@@ -17,7 +17,15 @@ from rq import Retry
 
 DEFAULT_RETRY = Retry(max=3, interval=[10, 30, 60])
 
-ALLOWED_RESOLUTIONS = {"480p": 480, "720p": 720, "1080p": 1080}
+_ALL_RESOLUTIONS = {"480p": 480, "720p": 720, "1080p": 1080}
+
+# On memory-constrained hosts (e.g. Render free tier, 512 MB RAM) set
+# HLS_RESOLUTIONS="480p" to avoid OOM kills during FFmpeg conversion.
+_configured = os.environ.get("HLS_RESOLUTIONS", "").strip()
+if _configured:
+    ALLOWED_RESOLUTIONS = {k: _ALL_RESOLUTIONS[k] for k in _configured.split(",") if k in _ALL_RESOLUTIONS}
+else:
+    ALLOWED_RESOLUTIONS = dict(_ALL_RESOLUTIONS)
 SEGMENT_RE = re.compile(r"^segment_\d{3}\.ts$")
 
 
